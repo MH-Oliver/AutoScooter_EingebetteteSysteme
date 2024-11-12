@@ -3,8 +3,8 @@
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 
 const int joystickThreshold = 50;
-const int r2Max = 1020;
-const int l2Max = 520;
+const int l2Max = 1020;
+const int r2Max = 520;
 
 const int r2Threshold = 0;
 const int l2Threshold = 0;
@@ -232,18 +232,27 @@ if (ctl->l2() >= l2Threshold) {
     int currentSpeedLeft;
     int currentSpeedRight;
     if (ctl->axisX() <= -joystickThreshold) {
-    // code for when left joystick is pushed left
-    currentSpeedLeft = maxMotorSpeed*(ctl->l2()/l2Max) * (1+(ctl->axisX()/leftJoystickMax));
-    currentSpeedRight = 255*(ctl->l2()/l2Max);
+    // code for when joystick is pushed left
+    currentSpeedLeft = maxMotorSpeed*((double)ctl->throttle()/l2Max) * (1+((double)ctl->axisX()/leftJoystickMax));
+    currentSpeedRight = 255*((double)ctl->throttle()/l2Max);
     }
 
-    if (ctl->axisX() >= joystickThreshold) {
+    else if (ctl->axisX() >= joystickThreshold) {
     // code for when left joystick is pushed right
-    currentSpeedRight = maxMotorSpeed*(ctl->l2()/l2Max) * (1+(ctl->axisX()/leftJoystickMax));
-    currentSpeedLeft = 255*(ctl->l2()/l2Max);
+    //Serial.println(1+((double)ctl->axisX()/leftJoystickMax));
+    currentSpeedLeft = maxMotorSpeed*((double)ctl->throttle()/l2Max);
+    currentSpeedRight = maxMotorSpeed*((double)ctl->throttle()/l2Max) * (1-((double)ctl->axisX()/leftJoystickMax));
     }
+
+    else {
+      currentSpeedLeft = maxMotorSpeed*((double)ctl->throttle()/l2Max);
+      currentSpeedRight = maxMotorSpeed*((double)ctl->throttle()/l2Max);
+    }
+
+    Serial.println(currentSpeedLeft);
+    Serial.println(currentSpeedRight);
     
-    moveMotors( false,  false,  currentSpeedLeft,  currentSpeedRight);
+    moveMotors( true,  true,  currentSpeedLeft,  currentSpeedRight);
   }
 
 
@@ -253,24 +262,24 @@ if (ctl->l2() >= l2Threshold) {
 
 
 //farwards driving (r2)
-  if (ctl->brake() >= r2Threshold) {
+  /*if (ctl->brake() >= r2Threshold) {
 
     int currentSpeedLeft;
     int currentSpeedRight;
     if (ctl->axisX() <= -joystickThreshold) {
     // code for when left joystick is pushed left
-    currentSpeedLeft = maxMotorSpeed*(ctl->/r2Max) * (1+(ctl->axisX()/leftJoystickMax));
+    currentSpeedLeft = maxMotorSpeed*(ctl->brake()/r2Max) * (1+(ctl->axisX()/leftJoystickMax));
     currentSpeedRight = 255*(ctl->brake()/r2Max);
     }
 
     if (ctl->axisX() >= joystickThreshold) {
     // code for when left joystick is pushed right
-    currentSpeedRight = maxMotorSpeed*(ctl->brake()/r2Max) * (1+(ctl->axisX()/leftJoystickMax));
     currentSpeedLeft = 255*(ctl->brake()/r2Max);
+    currentSpeedRight = maxMotorSpeed*(ctl->brake()/r2Max) * (1+(ctl->axisX()/leftJoystickMax));
     }
     
     moveMotors( true,  true,  currentSpeedLeft,  currentSpeedRight);
-  }
+  }*/
 
   if (ctl->r2() <= r2Threshold) {
 
@@ -384,7 +393,6 @@ void loop() {
   bool dataUpdated = BP32.update();
   if (dataUpdated)
     processControllers();
-
 
     /*Serial.println("test");
     analogWrite(GSM2,200);
