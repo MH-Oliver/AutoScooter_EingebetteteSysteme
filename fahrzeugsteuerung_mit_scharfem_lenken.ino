@@ -6,8 +6,8 @@ const int joystickThreshold = 50;
 const int l2Max = 1020;
 const int r2Max = 520;
 
-const int r2Threshold = 0;
-const int l2Threshold = 0;
+const int r2Threshold = 10;
+const int l2Threshold = 10;
 
 const int maxMotorSpeed = 255;
 const int leftJoystickMax = 520;
@@ -268,24 +268,28 @@ if (ctl->l2() >= l2Threshold) {
 
 //forwards driving (r2)
 // mit brake = r2
-if (ctl->r2() >= r2Threshold) {
+if (ctl->brake() >= r2Threshold) {
     
     int currentSpeedLeft;
     int currentSpeedRight;
+    bool leftmotor;
+    bool rightmotor;
+    
     if (ctl->axisX() <= -joystickThreshold) {
     // code for when joystick is pushed left
 
+  
     if (ctl->axisX() <= -joystickThreshold && aufteilungsgrenzelinks < ctl->axisX()) { //leichtes lenken (unverandert zu vorherigem lenken)
-      currentSpeedLeft = maxMotorSpeed*((double)ctl->brake()/r2Max) * (1+((double)ctl->axisX()/rightJoystickMax));
+      currentSpeedLeft = maxMotorSpeed*((double)ctl->brake()/r2Max) * (1+((double)ctl->axisX()/leftJoystickMax));
       currentSpeedRight = 255*((double)ctl->brake()/r2Max);
-        boolleftmotor = false; //beide motoren auf vorarts eingestellt
-      boolrightmotor = false;
+      leftmotor = false; //beide motoren auf vorarts eingestellt
+      rightmotor = false;
     
     } else { //scharfes lenken
       currentSpeedLeft = 255*((double)ctl->brake()/r2Max); //der motor, der vorher verlangsamt wurde, soll jetzt einfach ruckwarts fahren statt verlangsamt (eventuell kann man noch was an der zahl andern aber das muss getestet werden)
       currentSpeedRight = 255*((double)ctl->brake()/r2Max);
-      boolleftmotor = true; //linker motor ruckwarts
-      boolrightmotor = false;
+      leftmotor = true; //linker motor ruckwarts
+      rightmotor = false;
 
     }
 
@@ -296,17 +300,17 @@ if (ctl->r2() >= r2Threshold) {
 
     if (ctl->axisX() >= joystickThreshold && aufteilungsgrenzerechts > ctl->axisX()) { //leichtes lenken (unverandert zu vorherigem lenken)
       currentSpeedLeft = 255*((double)ctl->brake()/r2Max);
-      currentSpeedRight = maxMotorSpeed*((double)ctl->brake()/r2Max) * (1+((double)ctl->axisX()/rightJoystickMax));
-        boolleftmotor = false; //beide motoren auf vorarts eingestellt
-      boolrightmotor = false;
+      currentSpeedRight = maxMotorSpeed*((double)ctl->brake()/r2Max) * (1+((double)ctl->axisX()/leftJoystickMax));
+      leftmotor = false; //beide motoren auf vorarts eingestellt
+      rightmotor = false;
     
 
 
     } else { //scharfes lenken
       currentSpeedLeft = 255*((double)ctl->brake()/r2Max); //der motor, der vorher verlangsamt wurde, soll jetzt einfach ruckwarts fahren statt verlangsamt (eventuell kann man noch was an der zahl andern aber das muss getestet werden)
       currentSpeedRight = 255*((double)ctl->brake()/r2Max);
-      boolleftmotor = false; 
-      boolrightmotor = true; //rechter motor ruckwarts
+      leftmotor = false; 
+      rightmotor = true; //rechter motor ruckwarts
 
     }
 
@@ -316,14 +320,14 @@ if (ctl->r2() >= r2Threshold) {
     else {
       currentSpeedLeft = maxMotorSpeed*((double)ctl->brake()/r2Max);
       currentSpeedRight = maxMotorSpeed*((double)ctl->brake()/r2Max);
-      boolleftmotor = false; //beide vorwarts
-      boolrightmotor = false;
+      leftmotor = false; //beide vorwarts
+      rightmotor = false;
     }
 
     Serial.println(currentSpeedLeft);
     Serial.println(currentSpeedRight);
     
-    moveMotors( boolleftmotor,  boolrightmotor,  currentSpeedLeft,  currentSpeedRight);
+    moveMotors( leftmotor,  rightmotor,  currentSpeedLeft,  currentSpeedRight);
   }
 
 
@@ -334,24 +338,27 @@ if (ctl->r2() >= r2Threshold) {
 
 //backwards driving (l2)
 //mit throttle = l2
-if (ctl->l2() >= l2Threshold) {
+else if (ctl->throttle() >= l2Threshold) {
     
     int currentSpeedLeft;
     int currentSpeedRight;
+    bool leftmotor;
+    bool rightmotor;
+
     if (ctl->axisX() <= -joystickThreshold) {
     // code for when joystick is pushed left
 
     if (ctl->axisX() <= -joystickThreshold && aufteilungsgrenzelinks < ctl->axisX()) { //leichtes lenken (unverandert zu vorherigem lenken)
-      currentSpeedLeft = maxMotorSpeed*((double)ctl->throttle()/l2Max) * (1+((double)ctl->axisX()/rightJoystickMax));
+      currentSpeedLeft = maxMotorSpeed*((double)ctl->throttle()/l2Max) * (1+((double)ctl->axisX()/leftJoystickMax));
       currentSpeedRight = 255*((double)ctl->throttle()/l2Max);
-        boolleftmotor = true; //beide motoren auf ruckwarts eingestellt
-      boolrightmotor = true;
+      leftmotor = true; //beide motoren auf ruckwarts eingestellt
+      rightmotor = true;
     
     } else { //scharfes lenken (ruckwarts scharf links)
       currentSpeedLeft = 255*((double)ctl->throttle()/l2Max); //der motor, der vorher verlangsamt wurde, soll jetzt einfach ruckwarts fahren statt verlangsamt (eventuell kann man noch was an der zahl andern aber das muss getestet werden)
       currentSpeedRight = 255*((double)ctl->throttle()/l2Max);
-      boolleftmotor = false; //linker motor vorwarts
-      boolrightmotor = true; //rechter ruckwarts (wenn man ruckwarts fahrt und scharf links einlenkt, dann muss der linke reifen vorwarts drehen und der rechte ruckwarts)
+      leftmotor = false; //linker motor vorwarts
+      rightmotor = true; //rechter ruckwarts (wenn man ruckwarts fahrt und scharf links einlenkt, dann muss der linke reifen vorwarts drehen und der rechte ruckwarts)
 
     }
 
@@ -362,16 +369,16 @@ if (ctl->l2() >= l2Threshold) {
 
     if (ctl->axisX() >= joystickThreshold && aufteilungsgrenzerechts > ctl->axisX()) { //leichtes lenken (unverandert zu vorherigem lenken)
       currentSpeedLeft = 255*((double)ctl->throttle()/l2Max);
-      currentSpeedRight = maxMotorSpeed*((double)ctl->throttle()/l2Max) * (1+((double)ctl->axisX()/rightJoystickMax));
+      currentSpeedRight = maxMotorSpeed*((double)ctl->throttle()/l2Max) * (1+((double)ctl->axisX()/leftJoystickMax));
 
-        boolleftmotor = true; //beide motoren auf ruckwarts eingestellt
-      boolrightmotor = true;
+      leftmotor = true; //beide motoren auf ruckwarts eingestellt
+      rightmotor = true;
     
     } else { //scharfes lenken
       currentSpeedLeft = 255*((double)ctl->throttle()/l2Max); //der motor, der vorher verlangsamt wurde, soll jetzt einfach ruckwarts fahren statt verlangsamt (eventuell kann man noch was an der zahl andern aber das muss getestet werden)
       currentSpeedRight = 255*((double)ctl->throttle()/l2Max);
-      boolleftmotor = true; 
-      boolrightmotor = false; //rechter motor forwarts
+      leftmotor = true; 
+      rightmotor = false; //rechter motor forwarts
 
     }
 
@@ -381,14 +388,19 @@ if (ctl->l2() >= l2Threshold) {
     else {
       currentSpeedLeft = maxMotorSpeed*((double)ctl->throttle()/l2Max);
       currentSpeedRight = maxMotorSpeed*((double)ctl->throttle()/l2Max);
-      boolleftmotor = true;
-      boolrightmotor = true;
+      leftmotor = true;
+      rightmotor = true;
     }
 
     Serial.println(currentSpeedLeft);
     Serial.println(currentSpeedRight);
     
-    moveMotors( boolleftmotor,  boolrightmotor,  currentSpeedLeft,  currentSpeedRight);
+    moveMotors( leftmotor,  rightmotor,  currentSpeedLeft,  currentSpeedRight);
+  }
+
+  else {
+    Serial.println("Still stehen");
+    moveMotors( true,  true,  0,  0);
   }
 
 
