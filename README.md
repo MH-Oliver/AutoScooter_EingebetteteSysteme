@@ -3,5 +3,5 @@ In diesem Projekt wird die Idee eines ferngesteuerten Auto-Scooters realisiert. 
 
 ## Benutze Links:
 
-https://funduino.de/jukebox-mit-klingeltoenen
-https://racheldebarros.com/esp32-projects/connect-your-game-controller-to-an-esp32/
+- https://funduino.de/jukebox-mit-klingeltoenen
+- https://racheldebarros.com/esp32-projects/connect-your-game-controller-to-an-esp32/
