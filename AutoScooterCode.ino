@@ -33,6 +33,9 @@ int GSM2 = 33;
 int in3 = 26;
 int in4 = 25;
 
+//Piezo Pieper
+int beep = 4;
+
 void onConnectedController(ControllerPtr ctl) {
     bool foundEmptySlot = false;
     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
@@ -155,6 +158,7 @@ void setup() {
     pinMode(in4, OUTPUT);
     pinMode(GSM1, OUTPUT);
     pinMode(GSM2, OUTPUT);
+    pinMode(beep, OUTPUT);
     Serial.printf("Firmware: %s\n", BP32.firmwareVersion());
     const uint8_t* addr = BP32.localBdAddress();
     Serial.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
@@ -165,14 +169,29 @@ void setup() {
 void loop() {
     Serial.printf(" %d", digitalRead(beruhrungskabel));
     bool istfahrzeuggetroffen = digitalRead(beruhrungskabel) == 1 && millis() - letzteberuhrung > 3000;
-
-    static long lastBeepTime = 0;
+    static bool doppelPiepen = false;
     if (istfahrzeuggetroffen) {
         letzteberuhrung = millis();
         leben -= 10;
         oled.clear();
         oled.print(leben);
 
+        doppelPiepen = true;
+        digitalWrite(beep, HIGH);
+    }
+
+    if (millis() > letzteberuhrung+100) {
+      digitalWrite(beep, LOW);
+    }
+    if (millis() > letzteberuhrung+3000 && doppelPiepen) {
+      digitalWrite(beep, HIGH);
+      delay(100);
+      digitalWrite(beep,LOW);
+      delay(100);
+      digitalWrite(beep, HIGH);
+      delay(100);
+      digitalWrite(beep,LOW);
+      doppelPiepen = false;
     }
     
 
