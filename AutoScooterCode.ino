@@ -1,18 +1,7 @@
-#include <Wire.h>
-#include "SSD1306Ascii.h"
-#include "SSD1306AsciiWire.h"
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_GFX.h>
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define I2C_ADDRESS 0x3C
-#define RST_PIN -1
 #include <Bluepad32.h>
 
-SSD1306AsciiWire oled;
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT);
 int beruhrungskabel = 5;
-int leben = 100;
+int leben = 3;
 long letzteberuhrung = 0;
 
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
@@ -35,6 +24,11 @@ int in4 = 25;
 
 //Piezo Pieper
 int beep = 4;
+
+//Lebensanzeige - LEDs
+int Led1 = 18;
+int Led2 = 19;
+int Led3 = 21;
 
 void onConnectedController(ControllerPtr ctl) {
     bool foundEmptySlot = false;
@@ -69,21 +63,45 @@ void onDisconnectedController(ControllerPtr ctl) {
 }
 
 void moveMotors(bool linksVorwaerts, bool rechtsVorwaerts, int currentSpeedLeft, int currentSpeedRight) {
-    // Set motor speeds
-    analogWrite(GSM1, currentSpeedLeft);
-    analogWrite(GSM2, currentSpeedRight);
-
+    
     // Motor direction control
-    digitalWrite(in1, linksVorwaerts ? HIGH : LOW);
-    digitalWrite(in2, linksVorwaerts ? LOW : HIGH);
-    digitalWrite(in3, rechtsVorwaerts ? HIGH : LOW);
-    digitalWrite(in4, rechtsVorwaerts ? LOW : HIGH);
+    if( leben >= 1) {
+      // Set motor speeds
+      analogWrite(GSM1, currentSpeedLeft);
+      analogWrite(GSM2, currentSpeedRight);
+
+      digitalWrite(in1, linksVorwaerts ? HIGH : LOW);
+      digitalWrite(in2, linksVorwaerts ? LOW : HIGH);
+      digitalWrite(in3, rechtsVorwaerts ? HIGH : LOW);
+      digitalWrite(in4, rechtsVorwaerts ? LOW : HIGH);
+      } else {
+      // Set motor speeds to zero.
+      analogWrite(GSM1, 0);
+      analogWrite(GSM2, 0);
+      }
 }
 
 
 void processGamepad(ControllerPtr ctl) {
+
+
+//== PS4 X button = 0x0001 ==//
+  if (ctl->buttons() == 0x0001 && leben < 1) {
+      //alle 3 leds anmachen ( der riehe nach am besten) 
+      digitalWrite(Led1, HIGH);
+      delay(1000);
+      digitalWrite(Led2, HIGH);
+      delay(1000);
+      digitalWrite(Led3, HIGH);
+      delay(1000);
+      leben = 3;   
+  }
+    /*
     int aufteilungsgrenzelinks = (-511 + joystickThreshold) / 2;
     int aufteilungsgrenzerechts = (512 - joystickThreshold) / 2;
+    */
+    int aufteilungsgrenzelinks = -500;
+    int aufteilungsgrenzerechts = 500;
 
     auto calculateSpeed = [&](int brakeThrottle, int axisX, int threshold, int maxVal, bool reverse) {
         int speedLeft = maxMotorSpeed * ((double)brakeThrottle / maxVal);
@@ -91,29 +109,31 @@ void processGamepad(ControllerPtr ctl) {
         bool leftMotorReverse = reverse;
         bool rightMotorReverse = reverse;
 
-        if (axisX <= -joystickThreshold) {
+        if (axisX <= -joystickThreshold) { //links
             if (axisX > aufteilungsgrenzelinks) {
                 speedLeft *= (1 + ((double)axisX / leftJoystickMax));
             } else {
                 leftMotorReverse = !reverse;
+                //speedLeft = 0; //diese zeile wegmachen um auf der stelle drehen.
             }
-        } else if (axisX >= joystickThreshold) {
+        } else if (axisX >= joystickThreshold) { //rechts
             if (axisX < aufteilungsgrenzerechts) {
                 speedRight *= (1 + ((double)axisX / leftJoystickMax));
             } else {
                 rightMotorReverse = !reverse;
+                //speedRight = 0;  //diese zeile wegmachen um auf der stelle drehen.
             }
         }
 
         return std::make_tuple(speedLeft, speedRight, leftMotorReverse, rightMotorReverse);
     };
 
-    if (ctl->brake() >= r2Threshold) {
+    if (ctl->brake() >= r2Threshold) { // ruckwarts
         auto [currentSpeedLeft, currentSpeedRight, leftMotor, rightMotor] = calculateSpeed(ctl->brake(), ctl->axisX(), joystickThreshold, r2Max, false);
         moveMotors(leftMotor, rightMotor, currentSpeedLeft, currentSpeedRight);
         Serial.println(currentSpeedLeft);
         Serial.println(currentSpeedRight);
-    } else if (ctl->throttle() >= l2Threshold) {
+    } else if (ctl->throttle() >= l2Threshold) { //forwarts
         auto [currentSpeedLeft, currentSpeedRight, leftMotor, rightMotor] = calculateSpeed(ctl->throttle(), ctl->axisX(), joystickThreshold, l2Max, true);
         moveMotors(leftMotor, rightMotor, currentSpeedLeft, currentSpeedRight);
         Serial.println(currentSpeedLeft);
@@ -138,19 +158,17 @@ void processControllers() {
 }
 
 void setup() {
-    Wire.begin();
-    Wire.setClock(400000L);
-#if RST_PIN >= 0
-    oled.begin(&Adafruit128x64, I2C_ADDRESS, RST_PIN);
-#else
-    oled.begin(&Adafruit128x64, I2C_ADDRESS);
-#endif
-    oled.setFont(Callibri15);
-    display.setTextSize(3);
-    display.setCursor(64, 32);
-    display.setTextColor(SSD1306_WHITE);
-    oled.print(leben);
+    
+    pinMode(Led1, OUTPUT);
+    pinMode(Led2, OUTPUT);
+    pinMode(Led3, OUTPUT);
+
+    digitalWrite(Led1, HIGH);
+    digitalWrite(Led2, HIGH);
+    digitalWrite(Led3, HIGH);
+
     pinMode(beruhrungskabel, INPUT);
+
     Serial.begin(115200);
     pinMode(in1, OUTPUT);
     pinMode(in2, OUTPUT);
@@ -167,17 +185,33 @@ void setup() {
 }
 
 void loop() {
-    Serial.printf(" %d", digitalRead(beruhrungskabel));
+    Serial.printf("BeruehrungsKabel: %d \n", digitalRead(beruhrungskabel));
     bool istfahrzeuggetroffen = digitalRead(beruhrungskabel) == 1 && millis() - letzteberuhrung > 3000;
     static bool doppelPiepen = false;
-    if (istfahrzeuggetroffen) {
+    if (istfahrzeuggetroffen && leben >= 1) {
         letzteberuhrung = millis();
-        leben -= 10;
-        oled.clear();
-        oled.print(leben);
+        leben -= 1;
+        Serial.printf("Leben: %d \n", leben);
 
         doppelPiepen = true;
         digitalWrite(beep, HIGH);
+
+      
+      switch (leben) {
+    case 2:
+        // led3 ausmachen
+        digitalWrite(Led3, LOW);
+        break;
+    case 1:
+        // led2 ausmachen
+        digitalWrite(Led2, LOW);
+        break;
+    case 0:
+        // led1 ausmachen
+        digitalWrite(Led1, LOW);
+        break;
+    }
+
     }
 
     if (millis() > letzteberuhrung+100) {
