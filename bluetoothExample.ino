@@ -94,8 +94,7 @@ void setup() {
 }
 
 void loop() {
-
-  	//  Hier wird überprüft, ob neue Daten vom Controller empfangen wurden. Wenn dem so ist wird die Verarbeitung gestartet ("processControllers()").
+    //  Hier wird überprüft, ob neue Daten vom Controller empfangen wurden. Wenn dem so ist wird die Verarbeitung gestartet ("processControllers()").
     //  Sobalt eine Verbindung besteht werden permanent neue Daten gesendet, auch wenn sich nichts am Contoller verändert hat.
     bool dataUpdated = BP32.update();
     if (dataUpdated) {
