@@ -1,10 +1,12 @@
 #include <Bluepad32.h>
 
-int beruhrungskabel = 5;
+const int beruhrungskabel = 5;
 int leben = 3;
 long letzteberuhrung = 0;
 
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
+
+/*
 const int joystickThreshold = 50;
 const int l2Max = 1020;
 const int r2Max = 520;
@@ -12,23 +14,24 @@ const int r2Threshold = 10;
 const int l2Threshold = 10;
 const int maxMotorSpeed = 255;
 const int leftJoystickMax = 520;
+*/
 
 // Gleichstrommotor 1 (rechts)
-int GSM1 = 27;
-int in1 = 12;
-int in2 = 14;
+const int GSM1 = 27;
+const int in1 = 12;
+const int in2 = 14;
 // Gleichstrommotor 2 (links)
-int GSM2 = 33;
-int in3 = 26;
-int in4 = 25;
+const int GSM2 = 33;
+const int in3 = 26;
+const int in4 = 25;
 
 //Piezo Pieper
-int beep = 4;
+const int beep = 4;
 
 //Lebensanzeige - LEDs
-int Led1 = 18;
-int Led2 = 19;
-int Led3 = 21;
+const int Led1 = 18;
+const int Led2 = 19;
+const int Led3 = 21;
 
 void onConnectedController(ControllerPtr ctl) {
     bool foundEmptySlot = false;
@@ -65,16 +68,17 @@ void onDisconnectedController(ControllerPtr ctl) {
 void moveMotors(bool linksVorwaerts, bool rechtsVorwaerts) {
     
     if( leben < 1) {
-        // Set motor speeds to zero.
         analogWrite(GSM1, 0);
         analogWrite(GSM2, 0);
-        return;
-    }
-
-
+    } else {
         analogWrite(GSM1, 255);
         analogWrite(GSM2, 255);
-  
+    }
+    /*digitalWrite(in1, linksVorwaerts ? HIGH : LOW);
+      digitalWrite(in2, linksVorwaerts ? LOW : HIGH);
+      digitalWrite(in3, rechtsVorwaerts ? HIGH : LOW);
+      digitalWrite(in4, rechtsVorwaerts ? LOW : HIGH);
+    */
       if (linksVorwaerts && rechtsVorwaerts) {
           digitalWrite(in1, HIGH);
           digitalWrite(in2, LOW);
@@ -83,15 +87,15 @@ void moveMotors(bool linksVorwaerts, bool rechtsVorwaerts) {
       }
 
       if (!linksVorwaerts && !rechtsVorwaerts) {
-          digitalWrite(in1, HIGH);
-          digitalWrite(in2, LOW);
-          digitalWrite(in3, HIGH);
-          digitalWrite(in4, LOW);
+          digitalWrite(in1, LOW);
+          digitalWrite(in2, HIGH);
+          digitalWrite(in3, LOW);
+          digitalWrite(in4, HIGH);
       }
 
       if (!linksVorwaerts && rechtsVorwaerts) {
-          digitalWrite(in1, HIGH);
-          digitalWrite(in2, LOW);
+          digitalWrite(in1, LOW);
+          digitalWrite(in2, HIGH);
           digitalWrite(in3, HIGH);
           digitalWrite(in4, LOW);
       }
@@ -99,11 +103,8 @@ void moveMotors(bool linksVorwaerts, bool rechtsVorwaerts) {
       if (linksVorwaerts && !rechtsVorwaerts) {
           digitalWrite(in1, HIGH);
           digitalWrite(in2, LOW);
-          digitalWrite(in3, HIGH);
-          digitalWrite(in4, LOW);
-      }
-      } else {
-   
+          digitalWrite(in3, LOW);
+          digitalWrite(in4, HIGH);
       }
 }
 
@@ -112,7 +113,6 @@ void processGamepad(ControllerPtr ctl) {
 
 
 //== PS4 X button = 0x0001 ==//
-
   if (ctl->buttons() == 0x0001 && leben < 1) {
       //alle 3 leds anmachen ( der riehe nach am besten) 
       digitalWrite(Led1, HIGH);
@@ -124,36 +124,33 @@ void processGamepad(ControllerPtr ctl) {
       leben = 3;   
   }
 
-  if (ctl->throttle() >= 10) { //forwarts
+  if (ctl->throttle() >= 10) { //R2
 
-        if (ctl->axisX() <= 50 && ctl-> joystick() >= -50) {
+        if (ctl->axisX() <= 50 && ctl-> joystick() >= -50) { //gerade
           moveMotors(true,true);
         }
       
-       if (ctl->axisX() > 50) {
+       if (ctl->axisX() > 50) { //rechts
          moveMotors(true, false);
        }
 
-       if (ctl->axisX() < -50) {
+       if (ctl->axisX() < -50) { //links
          moveMotors(false, true);
        }    
 
   } 
+    
+  if (ctl->brake() >= 10) { // L2
 
-
-
-  
-  if (ctl->brake() >= 10) { // ruckwarts
-
-        if (ctl->axisX() <= 50 && ctl-> joystick() >= -50) {
+        if (ctl->axisX() <= 50 && ctl-> joystick() >= -50) { //gerade
           moveMotors(false,false);
         }
       
-       if (ctl->axisX() > 50) {
+       if (ctl->axisX() > 50) { //rechts
          moveMotors(false, true);
        }
 
-       if (ctl->axisX() < -50) {
+       if (ctl->axisX() < -50) { //links
          moveMotors(true, false);
        }    
   }
@@ -200,9 +197,10 @@ void setup() {
     BP32.enableVirtualDevice(false);
 }
 
+
 void loop() {
     Serial.printf("BeruehrungsKabel: %d \n", digitalRead(beruhrungskabel));
-    bool istfahrzeuggetroffen = digitalRead(beruhrungskabel) == 1 && millis() - letzteberuhrung > 3000;
+    bool istfahrzeuggetroffen = (digitalRead(beruhrungskabel) == 1) && ( (millis() - letzteberuhrung) > 3000);
     static bool doppelPiepen = false;
     if (istfahrzeuggetroffen && leben >= 1) {
         letzteberuhrung = millis();
