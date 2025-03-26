@@ -126,15 +126,15 @@ void processGamepad(ControllerPtr ctl) {
 
   if (ctl->throttle() >= 10) { //forwarts
 
-        if (ctl->joystick() <= 50 && ctl-> joystick() >= -50) {
+        if (ctl->axisX() <= 50 && ctl-> joystick() >= -50) {
           moveMotors(true,true);
         }
       
-       if (ctl->joystick() > 50) {
+       if (ctl->axisX() > 50) {
          moveMotors(true, false);
        }
 
-       if (ctl->joystick() < -50) {
+       if (ctl->axisX() < -50) {
          moveMotors(false, true);
        }    
 
@@ -145,15 +145,15 @@ void processGamepad(ControllerPtr ctl) {
   
   if (ctl->brake() >= 10) { // ruckwarts
 
-        if (ctl->joystick() <= 50 && ctl-> joystick() >= -50) {
+        if (ctl->axisX() <= 50 && ctl-> joystick() >= -50) {
           moveMotors(false,false);
         }
       
-       if (ctl->joystick() > 50) {
+       if (ctl->axisX() > 50) {
          moveMotors(false, true);
        }
 
-       if (ctl->joystick() < -50) {
+       if (ctl->axisX() < -50) {
          moveMotors(true, false);
        }    
   }
