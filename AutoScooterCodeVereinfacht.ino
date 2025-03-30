@@ -114,7 +114,7 @@ void processGamepad(ControllerPtr ctl) {
 
 //== PS4 X button = 0x0001 ==//
   if (ctl->buttons() == 0x0001 && leben < 1) {
-      //alle 3 leds anmachen ( der riehe nach am besten) 
+      //alle 3 leds anmachen (der Reihe nach) 
       digitalWrite(Led1, HIGH);
       delay(1000);
       digitalWrite(Led2, HIGH);
