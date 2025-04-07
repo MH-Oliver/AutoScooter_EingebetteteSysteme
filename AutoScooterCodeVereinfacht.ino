@@ -68,11 +68,8 @@ void onDisconnectedController(ControllerPtr ctl) {
 void moveMotors(bool linksVorwaerts, bool rechtsVorwaerts) {
     
     if( leben < 1) {
-        analogWrite(GSM1, 0);
-        analogWrite(GSM2, 0);
+      speedLow();
     } else {
-        analogWrite(GSM1, 255);
-        analogWrite(GSM2, 255);
     }
     /*digitalWrite(in1, linksVorwaerts ? HIGH : LOW);
       digitalWrite(in2, linksVorwaerts ? LOW : HIGH);
@@ -108,6 +105,19 @@ void moveMotors(bool linksVorwaerts, bool rechtsVorwaerts) {
       }
 }
 
+void speedHigh(){
+  
+        analogWrite(GSM1, 255);
+        analogWrite(GSM2, 255);
+}
+
+void speedLow(){
+  
+        analogWrite(GSM1, 0);
+        analogWrite(GSM2, 0);
+}
+
+
 
 void processGamepad(ControllerPtr ctl) {
 
@@ -124,33 +134,46 @@ void processGamepad(ControllerPtr ctl) {
       leben = 3;   
   }
 
+
+if (!(ctl->throttle() >= 10) && !(ctl->brake() >= 10)) { //
+    speedLow();
+}
+
   if (ctl->throttle() >= 10) { //R2
 
-        if (ctl->axisX() <= 50 && ctl-> joystick() >= -50) { //gerade
+        
+
+        if (ctl->axisX() <= 50 && ctl->axisX() >= -50) { //gerade
+          speedHigh();
           moveMotors(true,true);
         }
       
        if (ctl->axisX() > 50) { //rechts
+       speedHigh();
          moveMotors(true, false);
        }
 
        if (ctl->axisX() < -50) { //links
+       speedHigh();
          moveMotors(false, true);
        }    
 
-  } 
+  }
     
   if (ctl->brake() >= 10) { // L2
 
-        if (ctl->axisX() <= 50 && ctl-> joystick() >= -50) { //gerade
+        if (ctl->axisX() <= 50 && ctl-> axisX() >= -50) { //gerade
+        speedHigh();
           moveMotors(false,false);
         }
       
        if (ctl->axisX() > 50) { //rechts
+       speedHigh();
          moveMotors(false, true);
        }
 
        if (ctl->axisX() < -50) { //links
+       speedHigh();
          moveMotors(true, false);
        }    
   }
